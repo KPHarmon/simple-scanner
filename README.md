@@ -17,7 +17,7 @@ optional arguments:
                         the target hostname or IPv4
   -p PORT, --port PORT  port number to connect to
   -s {SYN,ACK,XMAS}, --scan {SYN,ACK,XMAS}
-                        perform a specified scan scan
+                        perform a specified scan
 ```
 
 ### Tested on:
