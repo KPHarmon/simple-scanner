@@ -9,16 +9,16 @@ class bcolors:
     ENDC = '\033[0m'
     BOLD = '\033[1m'
 
-def success(target, port):
+def open_message(target, port):
     return(f'%s:%d\t{bcolors.OKGREEN}[OPEN]{bcolors.ENDC}' % (target, port))        
 
-def fail(target, port):
-    return(f'%s:%d\t{bcolors.FAIL}[CLOSE]{bcolors.ENDC}' % (target, port))        
+def closed_message(target, port):
+    return(f'%s:%d\t{bcolors.FAIL}[CLOSED]{bcolors.ENDC}' % (target, port))        
 
-def filtered(target, port):
+def filtered_message(target, port):
     return(f'%s:%d\t{bcolors.WARNING}[FILTERED]{bcolors.ENDC}' % (target, port))        
 
-def unfiltered(target, port):
+def unfiltered_message(target, port):
     return(f'%s:%d\t{bcolors.WARNING}[UNFILTERED]{bcolors.ENDC}' % (target, port))        
 
 def banner(scan):
@@ -32,11 +32,11 @@ def syn_scan(target, port):
     
     # If there is a response, the port is open
     if response:
-        return(success(target, port))        
+        return(open_message(target, port))        
         
     # If there is no response, the port is closed
     else:
-        return(fail(target, port))        
+        return(closed_message(target, port))        
 
 # X-MAS Scan - Information from https://www.plixer.com/blog/understanding-xmas-scans/
 def xmas_scan(target, port):
@@ -45,18 +45,18 @@ def xmas_scan(target, port):
     response = sr1(IP(dst=target)/TCP(dport=port,flags="FPU"), verbose=False, timeout=2)
     
     # If there is no response, the port is open
-    if str(type(response)) == "<type 'NoneType'>":
-        return(success(target, port))
+    if type(response) == None:
+        return(open_message(target, port))
 
     # If the RST flag is set, the port is closed
     elif response.haslayer(TCP):
         if response.getlayer(TCP).flags == 0x14:
-            return(fail(target,port))
+            return(closed_message(target,port))
 
     # If the ICMP is type 3 and has a 1,2,3,9,10,13 code, the port is filtered
     elif response.haslayer(ICMP):
         if int(response.getlayer(ICMP).type)==3 and int(response.getlayer(ICMP).code) in [1,2,3,9,10,13]:
-            return(filtered(target, port))
+            return(filtered_message(target, port))
 
 # ACK Scan - Information from https://nmap.org/book/scan-methods-ack-scan.html
 def ack_scan(target, port):
@@ -65,18 +65,18 @@ def ack_scan(target, port):
     response = sr1(IP(dst=target)/TCP(dport=port,flags="A"), verbose=False, timeout=2)
  
     # If there is no response, the port is filtered
-    if type(response) == 'NoneType':
-        return(filtered(target, port))
+    if type(response) == None:
+        return(filtered_message(target, port))
 
     # If the RST flag is set, the port is unfiltered
     elif response.haslayer(TCP):
         if response.getlayer(TCP).flags == 0x4:
-            return(unfiltered(target, port))
+            return(unfiltered_message(target, port))
 
     # If the ICMP is type 3 and has a 1,2,3,9,10,13 code, the port is filtered
     elif response.haslayer(ICMP):
         if int(response.getlayer(ICMP).type)==3 and int(response.getlayer(ICMP).code) in [1,2,3,9,10,13]:
-            return(filtered(target, port))
+            return(filtered_message(target, port))
 
 # Driver Function
 def main():
@@ -99,7 +99,7 @@ def main():
 
     parser.add_argument('-s',
                         '--scan',
-                        help='perform a specified scan scan',
+                        help='perform a specified scan',
                         default='SYN',
                         type=str,
                         required=True,
@@ -108,18 +108,17 @@ def main():
     args = parser.parse_args()
 
     # Run Scan and Print Results
+    banner(args.scan)
+
     if args.scan == 'SYN':
-        banner(args.scan)
         result = syn_scan(args.target, args.port)
         print(result,end='\n\n')
 
     elif args.scan == 'ACK':
-        banner(args.scan)
         result = ack_scan(args.target, args.port)
         print(result,end='\n\n')
 
     elif args.scan == 'XMAS':
-        banner(args.scan)
         result = xmas_scan(args.target, args.port)
         print(result,end='\n\n')
 
