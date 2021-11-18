@@ -45,7 +45,7 @@ def xmas_scan(target, port):
     response = sr1(IP(dst=target)/TCP(dport=port,flags="FPU"), verbose=False, timeout=2)
     
     # If there is no response, the port is open
-    if type(response) == None:
+    if response == None:
         return(open_message(target, port))
 
     # If the RST flag is set, the port is closed
@@ -65,7 +65,7 @@ def ack_scan(target, port):
     response = sr1(IP(dst=target)/TCP(dport=port,flags="A"), verbose=False, timeout=2)
  
     # If there is no response, the port is filtered
-    if type(response) == None:
+    if response == None:
         return(filtered_message(target, port))
 
     # If the RST flag is set, the port is unfiltered
